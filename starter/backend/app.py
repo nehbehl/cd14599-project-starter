@@ -6,13 +6,16 @@ app = Flask(__name__, static_folder='../frontend')
 in_memory_storage = InMemoryStorage()
 order_tracker = OrderTracker(in_memory_storage)
 
+
 @app.route('/')
 def serve_index():
     return send_from_directory(app.static_folder, 'index.html')
 
+
 @app.route('/<path:filename>')
 def serve_static(filename):
     return send_from_directory(app.static_folder, filename)
+
 
 @app.route('/api/orders', methods=['POST'])
 def add_order_api():
@@ -20,7 +23,9 @@ def add_order_api():
     required = ["order_id", "item_name", "quantity", "customer_id"]
     missing = [field for field in required if field not in data]
     if missing:
-        return jsonify({"error": f"Missing required field(s): {', '.join(missing)}"}), 400
+        return jsonify({
+            "error": f"Missing required field(s): {', '.join(missing)}"
+        }), 400
 
     try:
         order_tracker.add_order(
@@ -35,12 +40,16 @@ def add_order_api():
 
     return jsonify(order_tracker.get_order_by_id(data["order_id"])), 201
 
+
 @app.route('/api/orders/<string:order_id>', methods=['GET'])
 def get_order_api(order_id):
     order = order_tracker.get_order_by_id(order_id)
     if not order:
-        return jsonify({"error": f"Order with ID '{order_id}' not found."}), 404
+        return jsonify({
+            "error": f"Order with ID '{order_id}' not found."
+        }), 404
     return jsonify(order), 200
+
 
 @app.route('/api/orders/<string:order_id>/status', methods=['PUT'])
 def update_order_status_api(order_id):
@@ -50,11 +59,14 @@ def update_order_status_api(order_id):
         return jsonify({"error": "Missing required field: new_status"}), 400
 
     try:
-        updated_order = order_tracker.update_order_status(order_id, new_status)
+        updated_order = order_tracker.update_order_status(
+            order_id, new_status
+        )
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
 
     return jsonify(updated_order), 200
+
 
 @app.route('/api/orders', methods=['GET'])
 def list_orders_api():
@@ -64,6 +76,7 @@ def list_orders_api():
     else:
         orders = order_tracker.list_all_orders()
     return jsonify(orders), 200
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True)
